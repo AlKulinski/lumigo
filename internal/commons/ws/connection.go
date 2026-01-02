@@ -3,6 +3,7 @@ package ws
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"net/url"
 	"time"
 
@@ -16,7 +17,9 @@ type WebSocketConfig struct {
 }
 
 func NewWebsocketConnection(cfg WebSocketConfig) *websocket.Conn {
-	u := url.URL{Scheme: "ws", Host: fmt.Sprintf("%s:%s", cfg.Host, cfg.Port), Path: "/ws", RawQuery: fmt.Sprintf("accessToken=%s", cfg.AccessToken)}
+	u := url.URL{Scheme: "ws", Host: fmt.Sprintf("%s:%s", cfg.Host, cfg.Port), Path: "/ws"}
+	header := http.Header{}
+	header.Set("Authorization", "Bearer "+cfg.AccessToken)
 	log.Printf("connecting to %s", u.String())
 
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
