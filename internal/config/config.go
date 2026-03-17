@@ -18,6 +18,12 @@ type Config struct {
 		Port        string
 		AccessToken string
 	}
+	Sync struct {
+		Service    string
+		CameraID   string
+		FilePath   string
+		FFmpegPath string
+	}
 }
 
 func Load() (*Config, error) {
@@ -32,6 +38,11 @@ func Load() (*Config, error) {
 	cfg.WebSocket.Host = getEnv("WS_HOST", "192.168.0.228")
 	cfg.WebSocket.Port = getEnv("WS_PORT", "8080")
 	cfg.WebSocket.AccessToken = getEnv("WS_ACCESS_TOKEN", "")
+
+	cfg.Sync.Service = getEnv("SYNC_SERVICE", "camera")
+	cfg.Sync.CameraID = getEnv("SYNC_CAMERA_ID", "0")
+	cfg.Sync.FilePath = getEnv("SYNC_FILE_PATH", "")
+	cfg.Sync.FFmpegPath = getEnv("FFMPEG_PATH", "ffmpeg")
 
 	if cfg.WebSocket.AccessToken == "" {
 		return nil, fmt.Errorf("WS_ACCESS_TOKEN is required")

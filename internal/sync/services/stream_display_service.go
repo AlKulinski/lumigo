@@ -12,16 +12,12 @@ import (
 
 const FPS = 20
 
-type StreamDisplayService interface {
-	DisplayStream() (<-chan domain.Frame, error)
-}
-
 type StreamDisplayServiceImpl struct {
 	width int
 	ctx   context.Context
 }
 
-func NewStreamDisplayService(width int, ctx context.Context) StreamDisplayService {
+func NewStreamDisplayService(width int, ctx context.Context) domain.StreamService {
 	return &StreamDisplayServiceImpl{
 		width: width,
 		ctx:   ctx,

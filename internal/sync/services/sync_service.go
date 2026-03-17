@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/AlKulinski/lumigo/internal/sync/domain"
 	"github.com/AlKulinski/lumigo/internal/sync/utils"
@@ -41,7 +42,7 @@ func (s *SyncServiceImpl) Sync(color domain.Color) error {
 		v = 100
 	}
 
-	fmt.Printf("h: %d, sat: %d, v: %d\n", int(h), int(sat), int(v))
+	log.Printf("h: %d, sat: %d, v: %d", int(h), int(sat), int(v))
 	err := s.openHabRepository.SendEvent(
 		domain.OpenHabMessage{
 			Type:  domain.OpenHabTypeItemCommand,

@@ -2,7 +2,7 @@ package infra
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -27,7 +27,7 @@ func NewOpenHabRepository(websocket *websocket.Conn) *OpenHabRepository {
 }
 
 func (r *OpenHabRepository) SendEvent(openHabMessage domain.OpenHabMessage) error {
-	fmt.Println(time.Now().UnixMilli())
+	log.Println(time.Now().UnixMilli())
 	jsonPayloadBytes, err := json.Marshal(openHabMessage.Payload)
 	if err != nil {
 		return err

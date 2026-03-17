@@ -1,7 +1,7 @@
 package mqtt
 
 import (
-	"fmt"
+	"log"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
@@ -21,7 +21,7 @@ func NewClient(cfg MQTTConfig) mqtt.Client {
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
 		panic(token.Error())
 	}
-	fmt.Println("Connected to MQTT broker")
+	log.Println("Connected to MQTT broker")
 
 	return client
 }

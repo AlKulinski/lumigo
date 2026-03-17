@@ -11,10 +11,10 @@ import (
 
 type SyncUsecase struct {
 	syncService   services.SyncService
-	streamService services.StreamDisplayService
+	streamService domain.StreamService
 }
 
-func NewSyncUsecase(syncService services.SyncService, streamService services.StreamDisplayService) *SyncUsecase {
+func NewSyncUsecase(syncService services.SyncService, streamService domain.StreamService) *SyncUsecase {
 	return &SyncUsecase{syncService: syncService, streamService: streamService}
 }
 

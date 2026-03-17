@@ -63,17 +63,64 @@ Configure the following environment variables:
 | `WS_HOST` | WebSocket host | `192.168.0.228` |
 | `WS_PORT` | WebSocket port | `8080` |
 | `WS_ACCESS_TOKEN` | WebSocket access token | **Required** |
+| `SYNC_SERVICE` | Default sync input service: `camera` or `file` | `camera` |
+| `SYNC_CAMERA_ID` | Default camera device index for `sync --service camera` | `0` |
+| `SYNC_FILE_PATH` | Default media file path for `sync --service file` | Empty |
+| `FFMPEG_PATH` | Path to the `ffmpeg` binary used for file streaming | `ffmpeg` |
 
 ## Usage
 
-Run the sync command to start capturing and syncing colors:
+Run the sync command to start capturing and syncing colors.
+
+### Default camera input
 
 ```bash
 ./lumigo sync
 ```
 
+This uses the `camera` service by default.
+
+### Choose the stream service from the CLI
+
+Use the camera input service explicitly:
+
+```bash
+./lumigo sync --service camera
+```
+
+Select a specific camera input device:
+
+```bash
+./lumigo sync --service camera --camera-input 1
+```
+
+Set a custom camera FPS:
+
+```bash
+./lumigo sync --service camera --camera-input 1 --camera-fps 10
+```
+
+Use a media file as the sync source:
+
+```bash
+./lumigo sync --service file --file-path ./test_mov/sample.mov
+```
+
+### Configure defaults with environment variables
+
+You can set default sync behavior in your `.env` file:
+
+```bash
+SYNC_SERVICE=camera
+SYNC_CAMERA_ID=1
+SYNC_FILE_PATH=./test_mov/sample.mov
+FFMPEG_PATH=/opt/homebrew/bin/ffmpeg
+```
+
+CLI flags override environment-based defaults.
+
 The application will:
-- Start capturing your screen
+- Start capturing from the selected input source
 - Analyze colors in real-time
 - Send HSV color commands to your MQTT broker
 - Continue running until stopped with Ctrl+C
@@ -138,6 +185,8 @@ This project is open source. Please check the license file for details.
 ### Common Issues
 
 - **Screen capture fails**: Ensure the application has screen recording permissions on macOS
+- **Camera input fails**: Try a different `--camera-input` value or set `SYNC_CAMERA_ID` in your environment
+- **File input fails**: Verify `--file-path` points to a valid media file and `FFMPEG_PATH` points to an installed `ffmpeg` binary
 - **MQTT connection issues**: Verify your broker URL and network connectivity
 - **WebSocket errors**: Check your access token and WebSocket server availability
 
