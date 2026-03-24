@@ -11,6 +11,7 @@ import (
 	"github.com/AlKulinski/lumigo/internal/commons/mqtt"
 	"github.com/AlKulinski/lumigo/internal/commons/ws"
 	"github.com/AlKulinski/lumigo/internal/config"
+	framing "github.com/AlKulinski/lumigo/internal/framing/services"
 	"github.com/AlKulinski/lumigo/internal/sync/domain"
 	"github.com/AlKulinski/lumigo/internal/sync/infra"
 	"github.com/AlKulinski/lumigo/internal/sync/services"
@@ -55,7 +56,8 @@ var syncCmd = &cobra.Command{
 func buildStreamService(ctx context.Context) domain.StreamService {
 	switch strings.ToLower(syncStreamService) {
 	case "camera":
-		return services.NewStreamCameraServiceImpl(ctx, syncCameraInput, syncCameraFPS)
+		framingService := framing.NewFramingService()
+		return services.NewStreamCameraServiceImpl(ctx, syncCameraInput, syncCameraFPS, framingService)
 	case "file":
 		if syncFilePath == "" {
 			log.Fatal("sync file stream requires --file-path")
