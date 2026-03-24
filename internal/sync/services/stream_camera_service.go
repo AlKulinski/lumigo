@@ -16,13 +16,14 @@ import (
 const defaultCameraStreamFPS = 10
 
 type StreamCameraServiceImpl struct {
-	ctx            context.Context
-	fps            int
-	webcam         *gocv.VideoCapture
-	framingService framing.FramingService
+	ctx                context.Context
+	fps                int
+	webcam             *gocv.VideoCapture
+	framingService     framing.FramingService
+	debugWindowService framing.DebugWindowService
 }
 
-func NewStreamCameraServiceImpl(ctx context.Context, deviceID int, fps int, framingService framing.FramingService) domain.StreamService {
+func NewStreamCameraServiceImpl(ctx context.Context, deviceID int, fps int, framingService framing.FramingService, debugWindowService framing.DebugWindowService) domain.StreamService {
 	if fps <= 0 {
 		fps = defaultCameraStreamFPS
 	}
@@ -30,10 +31,11 @@ func NewStreamCameraServiceImpl(ctx context.Context, deviceID int, fps int, fram
 	webcam := openCamera(deviceID, fps)
 
 	return &StreamCameraServiceImpl{
-		ctx:            ctx,
-		fps:            fps,
-		framingService: framingService,
-		webcam:         webcam,
+		ctx:                ctx,
+		fps:                fps,
+		framingService:     framingService,
+		debugWindowService: debugWindowService,
+		webcam:             webcam,
 	}
 }
 
@@ -84,6 +86,10 @@ func (s *StreamCameraServiceImpl) DisplayStream() (<-chan domain.Frame, error) {
 				if err != nil {
 					log.Printf("cannot convert image: %v", err)
 					continue
+				}
+
+				if s.debugWindowService != nil {
+					s.debugWindowService.Update(parsedImg)
 				}
 
 				select {

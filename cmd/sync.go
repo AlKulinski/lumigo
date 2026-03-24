@@ -19,10 +19,11 @@ import (
 )
 
 var (
-	syncStreamService string
-	syncCameraInput   int
-	syncCameraFPS     int
-	syncFilePath      string
+	syncStreamService   string
+	syncCameraInput     int
+	syncCameraFPS       int
+	syncFilePath        string
+	syncDebugWindowMode bool
 )
 
 var syncCmd = &cobra.Command{
@@ -46,26 +47,37 @@ var syncCmd = &cobra.Command{
 		})
 		openHabRepository := infra.NewOpenHabMqttRepository(c)
 		syncService := services.NewSyncService(openHabRepository, cfg.MQTT.Topic)
-		streamService := buildStreamService(context.Background())
+		streamService, runUI := buildStreamService(context.Background())
 		usecase := usecases.NewSyncUsecase(syncService, streamService)
 
-		usecase.Execute()
+		if runUI != nil {
+			go usecase.Execute()
+			runUI()
+		} else {
+			usecase.Execute()
+		}
 	},
 }
 
-func buildStreamService(ctx context.Context) domain.StreamService {
+func buildStreamService(ctx context.Context) (domain.StreamService, func()) {
 	switch strings.ToLower(syncStreamService) {
 	case "camera":
 		framingService := framing.NewFramingService()
-		return services.NewStreamCameraServiceImpl(ctx, syncCameraInput, syncCameraFPS, framingService)
+
+		if syncDebugWindowMode {
+			debugWindowService := framing.NewImageWindowService()
+			return services.NewStreamCameraServiceImpl(ctx, syncCameraInput, syncCameraFPS, framingService, debugWindowService), debugWindowService.Run
+		}
+
+		return services.NewStreamCameraServiceImpl(ctx, syncCameraInput, syncCameraFPS, framingService, nil), nil
 	case "file":
 		if syncFilePath == "" {
 			log.Fatal("sync file stream requires --file-path")
 		}
-		return services.NewStreamFileServiceImpl(syncFilePath, ctx)
+		return services.NewStreamFileServiceImpl(syncFilePath, ctx), nil
 	default:
 		log.Fatalf("unsupported stream service %q, expected one of: camera, file", syncStreamService)
-		return nil
+		return nil, nil
 	}
 }
 
@@ -105,5 +117,11 @@ func init() {
 		"file-path",
 		cfg.Sync.FilePath,
 		"Path to input media file when service=file",
+	)
+	syncCmd.Flags().BoolVar(
+		&syncDebugWindowMode,
+		"debug",
+		false,
+		"Debug window enabled debug=true",
 	)
 }
