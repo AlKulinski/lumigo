@@ -1,33 +1,46 @@
 package timer
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 type ImmediateTicker struct {
 	C      <-chan time.Time
 	ticker *time.Ticker
+	cancel context.CancelFunc
 }
 
 func (t *ImmediateTicker) Stop() {
-	t.ticker.Stop()
+	t.cancel()
 }
 
-func NewImmediateTicker(d time.Duration) *ImmediateTicker {
+func NewImmediateTicker(d time.Duration, ctx context.Context) *ImmediateTicker {
 	ch := make(chan time.Time)
 	ticker := time.NewTicker(d)
+	ctx, cancel := context.WithCancel(ctx)
 
 	go func() {
-		defer close(ch)
-		defer ticker.Stop()
+		defer func() {
+			close(ch)
+			ticker.Stop()
+		}()
 
 		ch <- time.Now()
 
-		for t := range ticker.C {
-			ch <- t
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case t := <-ticker.C:
+				ch <- t
+			}
 		}
 	}()
 
 	return &ImmediateTicker{
 		C:      ch,
 		ticker: ticker,
+		cancel: cancel,
 	}
 }

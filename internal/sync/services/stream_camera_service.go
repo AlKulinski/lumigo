@@ -63,7 +63,7 @@ func (s *StreamCameraServiceImpl) DisplayStream() (<-chan domain.Frame, error) {
 
 	framing := image.Rect(0, 0, img.Cols(), img.Rows())
 	ticker := time.NewTicker(time.Second / time.Duration(s.fps))
-	framingTicker := timer.NewImmediateTicker(2 * time.Second)
+	framingTicker := timer.NewImmediateTicker(2*time.Second, s.ctx)
 	framingRing := ring.New(10)
 	go func() {
 		defer func() {
