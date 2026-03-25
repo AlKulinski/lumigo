@@ -36,10 +36,10 @@ func quickSelect(nums []int, k int) int {
 
 func TopN[T any](items []T, k int, getter func(a T) int) []T {
 	if k == 0 {
-		return nil
+		return []T{}
 	}
 	if len(items) == 0 {
-		return nil
+		return []T{}
 	}
 
 	if k > len(items) {
@@ -47,8 +47,8 @@ func TopN[T any](items []T, k int, getter func(a T) int) []T {
 	}
 
 	nums := make([]int, 0, len(items))
-	for _, numss := range items {
-		nums = append(nums, getter(numss))
+	for _, item := range items {
+		nums = append(nums, getter(item))
 	}
 
 	threshold := quickSelect(nums, k-1)

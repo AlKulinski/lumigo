@@ -45,15 +45,17 @@ func Test_quickSelect_kthLargest(t *testing.T) {
 
 func intGetter(a int) int { return a }
 
-func TestTopN_nilOnZeroK(t *testing.T) {
-	if result := TopN([]int{1, 2, 3}, 0, intGetter); result != nil {
-		t.Errorf("expected nil for k=0, got %v", result)
+func TestTopN_emptyOnZeroK(t *testing.T) {
+	result := TopN([]int{1, 2, 3}, 0, intGetter)
+	if result == nil || len(result) != 0 {
+		t.Errorf("expected empty slice for k=0, got %v", result)
 	}
 }
 
-func TestTopN_nilOnEmptyItems(t *testing.T) {
-	if result := TopN([]int{}, 3, intGetter); result != nil {
-		t.Errorf("expected nil for empty items, got %v", result)
+func TestTopN_emptyOnEmptyItems(t *testing.T) {
+	result := TopN([]int{}, 3, intGetter)
+	if result == nil || len(result) != 0 {
+		t.Errorf("expected empty slice for empty items, got %v", result)
 	}
 }
 
