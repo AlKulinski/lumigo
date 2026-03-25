@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"image"
 
 	"fyne.io/fyne/v2"
@@ -13,9 +14,10 @@ type ImageWindowService struct {
 	app    fyne.App
 	window fyne.Window
 	img    *canvas.Image
+	ctx    context.Context
 }
 
-func NewImageWindowService() domain.DebugWindowService {
+func NewImageWindowService(ctx context.Context) domain.DebugWindowService {
 	a := app.New()
 	w := a.NewWindow("Image Window")
 
@@ -30,10 +32,15 @@ func NewImageWindowService() domain.DebugWindowService {
 		app:    a,
 		window: w,
 		img:    img,
+		ctx:    ctx,
 	}
 }
 
 func (s *ImageWindowService) Run() {
+	go func() {
+		<-s.ctx.Done()
+		s.app.Quit()
+	}()
 	s.window.Show()
 	s.app.Run()
 }

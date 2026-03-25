@@ -1,6 +1,8 @@
 package domain
 
-import "image"
+import (
+	"image"
+)
 
 type DebugWindowService interface {
 	Run()

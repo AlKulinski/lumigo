@@ -3,8 +3,11 @@ package cmd
 import (
 	"context"
 	"log"
+	"os"
+	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/spf13/cobra"
 
@@ -36,6 +39,9 @@ var syncCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
+		ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer cancel()
+
 		c := mqtt.NewClient(mqtt.MQTTConfig{
 			Broker:   cfg.MQTT.Broker,
 			ClientID: cfg.MQTT.ClientID,
@@ -47,15 +53,13 @@ var syncCmd = &cobra.Command{
 		})
 		openHabRepository := infra.NewOpenHabMqttRepository(c)
 		syncService := services.NewSyncService(openHabRepository, cfg.MQTT.Topic)
-		streamService, runUI := buildStreamService(context.Background())
+		streamService, runUI := buildStreamService(ctx)
 		usecase := usecases.NewSyncUsecase(syncService, streamService)
-
+		go usecase.Execute()
 		if runUI != nil {
-			go usecase.Execute()
 			runUI()
-		} else {
-			usecase.Execute()
 		}
+		<-ctx.Done()
 	},
 }
 
@@ -65,7 +69,7 @@ func buildStreamService(ctx context.Context) (domain.StreamService, func()) {
 		framingService := framing.NewFramingService()
 
 		if syncDebugWindowMode {
-			debugWindowService := framing.NewImageWindowService()
+			debugWindowService := framing.NewImageWindowService(ctx)
 			return services.NewStreamCameraServiceImpl(ctx, syncCameraInput, syncCameraFPS, framingService, debugWindowService), debugWindowService.Run
 		}
 

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"container/ring"
 	"context"
 	"fmt"
 	"image"
@@ -39,6 +40,18 @@ func NewStreamCameraServiceImpl(ctx context.Context, deviceID int, fps int, fram
 	}
 }
 
+func (s *StreamCameraServiceImpl) averageFraming(f framing.Framing, r *ring.Ring) framing.Framing {
+	r.Value = f
+	r = r.Next()
+	sum := image.Rect(0, 0, 0, 0)
+	r.Do(func(value interface{}) {
+		if rect, ok := value.(framing.Framing); ok {
+			sum = sum.Union(rect)
+		}
+	})
+	return sum
+}
+
 func (s *StreamCameraServiceImpl) DisplayStream() (<-chan domain.Frame, error) {
 	ch := make(chan domain.Frame, 1)
 
@@ -51,6 +64,7 @@ func (s *StreamCameraServiceImpl) DisplayStream() (<-chan domain.Frame, error) {
 	framing := image.Rect(0, 0, img.Cols(), img.Rows())
 	ticker := time.NewTicker(time.Second / time.Duration(s.fps))
 	framingTicker := timer.NewImmediateTicker(2 * time.Second)
+	framingRing := ring.New(10)
 	go func() {
 		defer func() {
 			close(ch)
@@ -67,7 +81,7 @@ func (s *StreamCameraServiceImpl) DisplayStream() (<-chan domain.Frame, error) {
 				tvRect, found := s.framingService.Frame(img.Clone())
 				if found {
 					log.Printf("framing: %v", tvRect)
-					framing = tvRect
+					framing = s.averageFraming(tvRect, framingRing)
 				}
 			case <-ticker.C:
 				if ok := s.webcam.Read(&img); !ok {
@@ -89,16 +103,12 @@ func (s *StreamCameraServiceImpl) DisplayStream() (<-chan domain.Frame, error) {
 				}
 
 				if s.debugWindowService != nil {
-					s.debugWindowService.Update(parsedImg)
+					go s.debugWindowService.Update(parsedImg)
 				}
 
-				select {
-				case ch <- domain.Frame{
+				ch <- domain.Frame{
 					Image:     parsedImg,
 					Timestamp: time.Now(),
-				}:
-				case <-s.ctx.Done():
-					return
 				}
 			}
 		}
