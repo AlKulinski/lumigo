@@ -2,8 +2,8 @@ package usecases
 
 import (
 	"image"
-	"sort"
 
+	"github.com/AlKulinski/lumigo/internal/commons/quickselect"
 	"github.com/AlKulinski/lumigo/internal/sync/domain"
 	"github.com/AlKulinski/lumigo/internal/sync/services"
 	"github.com/AlKulinski/lumigo/internal/sync/utils"
@@ -27,7 +27,6 @@ func (u *SyncUsecase) Execute() error {
 	for frame := range frames {
 		lumas := calculateLumas(frame.Image)
 
-		sortByLuma(lumas)
 		topLumas := pickSample(lumas)
 		r, g, b, luma := utils.AverageColor(topLumas)
 
@@ -70,12 +69,8 @@ func calculateLumas(image image.Image) []domain.Pixel {
 	return lumas
 }
 
-func sortByLuma(lumas []domain.Pixel) {
-	sort.Slice(lumas, func(i, j int) bool {
-		return lumas[i].Color.Luma < lumas[j].Color.Luma
-	})
-}
-
 func pickSample(lumas []domain.Pixel) []domain.Pixel {
-	return lumas[:len(lumas)/10]
+	return quickselect.TopN(lumas, len(lumas)/10, func(a domain.Pixel) int {
+		return int(a.Color.Luma)
+	})
 }
