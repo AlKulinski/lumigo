@@ -2,7 +2,6 @@ package services
 
 import (
 	"image"
-	"log"
 	"math"
 
 	"github.com/AlKulinski/lumigo/internal/framing/domain"
@@ -63,8 +62,6 @@ func (s *GocvFramingServiceImpl) Frame(frame gocv.Mat) (domain.Framing, bool) {
 		areaScore := area / frameArea
 
 		score := areaScore*0.5 + aspectScore*0.5
-
-		log.Printf("contour: %v, rect: %v, score: %f\n", contour, rect, score)
 
 		if score > bestScore {
 			bestScore = score

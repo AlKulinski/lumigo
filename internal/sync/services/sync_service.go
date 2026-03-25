@@ -2,13 +2,12 @@ package services
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/AlKulinski/lumigo/internal/sync/domain"
 	"github.com/AlKulinski/lumigo/internal/sync/utils"
 )
 
-const THRESHOLD = 20
+const THRESHOLD = 10
 
 type SyncService interface {
 	Sync(color domain.Color) error
@@ -34,15 +33,16 @@ func NewSyncService(openHabRepository domain.OpenHabRepository, topic string) Sy
 }
 
 func (s *SyncServiceImpl) Sync(color domain.Color) error {
-	h, sat, v := utils.RGBToHSB(color.R, color.G, color.B)
-	if v < 20 {
-		v *= 5
+	if color.IsClose(&s.lastValue, THRESHOLD) {
+		return nil
 	}
-	if v > 60 {
+	h, sat, v := utils.RGBToHSB(color.R, color.G, color.B)
+	if v < 10 {
+		v += 40
+	}
+	if v > 40 {
 		v = 100
 	}
-
-	log.Printf("h: %d, sat: %d, v: %d", int(h), int(sat), int(v))
 	err := s.openHabRepository.SendEvent(
 		domain.OpenHabMessage{
 			Type:  domain.OpenHabTypeItemCommand,

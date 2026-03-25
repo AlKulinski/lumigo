@@ -34,35 +34,54 @@ func (u *SyncUsecase) Execute() error {
 			R:    r,
 			G:    g,
 			B:    b,
-			Luma: float64(luma),
+			Luma: luma,
 		})
 	}
 	return nil
 }
 
-func calculateLumas(image image.Image) []domain.Pixel {
-	rect := image.Bounds()
+func calculateLumas(img image.Image) []domain.Pixel {
+	rect := img.Bounds()
+	yMin, xMin := rect.Min.Y, rect.Min.X
 	yMax, xMax := rect.Max.Y, rect.Max.X
-	lumas := make([]domain.Pixel, 0, xMax*yMax)
+	lumas := make([]domain.Pixel, 0, (xMax-xMin)*(yMax-yMin))
 
-	for y := rect.Min.Y; y < yMax; y++ {
-		for x := rect.Min.X; x < xMax; x++ {
-			r, g, b, _ := image.At(x, y).RGBA()
-			r8 := uint32(r >> 8)
-			g8 := uint32(g >> 8)
-			b8 := uint32(b >> 8)
-			luma := utils.CalculateLuma(r8, g8, b8)
+	appendPixel := func(x, y int, r, g, b uint32) {
+		lumas = append(lumas, domain.Pixel{
+			X: x,
+			Y: y,
+			Color: domain.Color{
+				R:    r,
+				G:    g,
+				B:    b,
+				Luma: utils.CalculateLuma(r, g, b),
+			},
+		})
+	}
 
-			lumas = append(lumas, domain.Pixel{
-				X: x,
-				Y: y,
-				Color: domain.Color{
-					R:    r8,
-					G:    g8,
-					B:    b8,
-					Luma: float64(luma),
-				},
-			})
+	switch m := img.(type) {
+	case *image.RGBA:
+		for y := yMin; y < yMax; y++ {
+			i := m.PixOffset(xMin, y)
+			for x := xMin; x < xMax; x++ {
+				appendPixel(x, y, uint32(m.Pix[i]), uint32(m.Pix[i+1]), uint32(m.Pix[i+2]))
+				i += 4
+			}
+		}
+	case *image.NRGBA:
+		for y := yMin; y < yMax; y++ {
+			i := m.PixOffset(xMin, y)
+			for x := xMin; x < xMax; x++ {
+				appendPixel(x, y, uint32(m.Pix[i]), uint32(m.Pix[i+1]), uint32(m.Pix[i+2]))
+				i += 4
+			}
+		}
+	default:
+		for y := yMin; y < yMax; y++ {
+			for x := xMin; x < xMax; x++ {
+				r, g, b, _ := img.At(x, y).RGBA()
+				appendPixel(x, y, r>>8, g>>8, b>>8)
+			}
 		}
 	}
 

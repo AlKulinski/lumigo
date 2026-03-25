@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"log"
 	"math"
 )
 
@@ -9,7 +8,7 @@ type Color struct {
 	R    uint32
 	G    uint32
 	B    uint32
-	Luma float64
+	Luma uint32
 }
 
 func (c *Color) Distance(color *Color) float64 {
@@ -20,7 +19,6 @@ func (c *Color) Distance(color *Color) float64 {
 }
 
 func (c *Color) IsClose(color *Color, threshold float64) bool {
-	log.Print(c, color)
 	return c.Distance(color) <= threshold
 }
 
